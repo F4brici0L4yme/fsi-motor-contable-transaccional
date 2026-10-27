@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentación del proceso
+    url: https://github.com/F4brici0L4yme/fsi-motor-contable-transaccional/tree/main/docs
+    about: Revisa el flujo de trabajo, la Definition of Done y las ceremonias antes de abrir un issue.
