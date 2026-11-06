@@ -119,3 +119,53 @@ Log de auditoría de cada ejecución del job de transacciones periódicas.
 | `asiento_id` | `uuid` | Sí | FK | Asiento contable generado (si fue exitoso) | `asientos_contables.id` |
 | `mensaje_error` | `text` | Sí | — | Traza de error detallada si falló | Diagnóstico técnico |
 | `duracion_ms` | `integer` | No | — | Tiempo de ejecución en milisegundos | Métrica de desempeño |
+
+---
+
+## 7. Tabla: `permisos_cuentas_modulo`
+Matriz de restricción de cuentas por módulo emisor (Cortafuegos Contable).
+
+| Campo | Tipo | Nulo | Clave | Descripción | Origen / Catálogo |
+| :--- | :--- | :---: | :---: | :--- | :--- |
+| `id` | `uuid` | No | PK | Identificador del permiso | `uuid_generate_v4()` |
+| `modulo` | `varchar(50)` | No | — | Módulo emisor (VENTAS, COMPRAS, ALMACEN, etc.) | Módulos ERP |
+| `cuenta_prefijo` | `varchar(20)` | No | — | Prefijo o código exacto de cuenta PCGE autorizada | Ej. `12`, `40111`, `701` |
+| `permite_debe` | `boolean` | No | — | ¿Permite que este módulo impute al Debe? | Default: `true` |
+| `permite_haber` | `boolean` | No | — | ¿Permite que este módulo impute al Haber? | Default: `true` |
+| `moneda_permitida` | `varchar(10)` | No | — | `PEN`, `USD`, `AMBAS` | Restricción monetaria |
+| `requiere_auxiliar` | `boolean` | No | — | ¿Exige RUC/DNI del tercero en la línea? | Default: `false` |
+| `is_active` | `boolean` | No | — | Vigencia del permiso | Default: `true` |
+
+---
+
+## 8. Tabla: `saldos_cuentas_mayor`
+Tabla agregada de mayorización para "sacar cuentas" y emitir Balance de Comprobación en tiempo real.
+
+| Campo | Tipo | Nulo | Clave | Descripción | Origen / Catálogo |
+| :--- | :--- | :---: | :---: | :--- | :--- |
+| `id` | `uuid` | No | PK | Identificador del registro de saldo | `uuid_generate_v4()` |
+| `periodo_id` | `varchar(6)` | No | — | Periodo contable (`YYYYMM`) | Periodos Contables |
+| `cuenta_codigo` | `varchar(20)` | No | FK | Código de la cuenta contable | Catálogo PCGE |
+| `moneda` | `varchar(3)` | No | — | Moneda del saldo (`PEN` o `USD`) | Catálogo 02 SUNAT |
+| `total_debe` | `numeric(18,2)` | No | — | Sumatoria acumulada de débitos en el periodo | $\sum Debe$ |
+| `total_haber` | `numeric(18,2)` | No | — | Sumatoria acumulada de créditos en el periodo | $\sum Haber$ |
+| `saldo_deudor` | `numeric(18,2)` | No | — | Saldo deudor resultante ($\max(0, Debe - Haber)$) | Mayor o igual a 0.00 |
+| `saldo_acreedor` | `numeric(18,2)` | No | — | Saldo acreedor resultante ($\max(0, Haber - Debe)$) | Mayor o igual a 0.00 |
+| `updated_at` | `timestamptz` | No | — | Timestamp de la última mayorización | Automático |
+
+---
+
+## 9. Tabla: `proyecciones_flujo_caja`
+Consolidación de compromisos de cobro y pago para monitoreo de liquidez y soporte a decisiones.
+
+| Campo | Tipo | Nulo | Clave | Descripción | Origen / Catálogo |
+| :--- | :--- | :---: | :---: | :--- | :--- |
+| `id` | `uuid` | No | PK | Identificador de la proyección | `uuid_generate_v4()` |
+| `asiento_id` | `uuid` | No | FK | Asiento contable de origen (factura/compromiso) | `asientos_contables.id` |
+| `tipo_flujo` | `varchar(10)` | No | — | `ENTRADA` (Cobro) o `SALIDA` (Pago) | Clasificación |
+| `fecha_vencimiento` | `date` | No | — | Fecha límite acordada de pago o cobro | Calendario |
+| `monto_comprometido` | `numeric(18,2)` | No | — | Importe original adeudado o por cobrar | `NUMERIC(18,2)` |
+| `monto_amortizado` | `numeric(18,2)` | No | — | Importe ya cobrado o pagado a la fecha | `NUMERIC(18,2)` |
+| `saldo_pendiente` | `numeric(18,2)` | No | — | Saldo exigible restante | `comprometido - amortizado` |
+| `dias_atraso` | `integer` | No | — | Días de atraso calculados respecto a hoy | $\max(0, \text{hoy} - \text{vencimiento})$ |
+| `estado` | `varchar(15)` | No | — | `PENDIENTE`, `COBRADO/PAGADO`, `ATRASADO` | Estado del compromiso |

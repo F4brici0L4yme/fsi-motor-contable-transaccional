@@ -10,7 +10,7 @@ Este repositorio reúne el trabajo del módulo **Motor Contable Transaccional (M
 
 El objetivo del módulo Motor Contable Transaccional es recibir las operaciones económicas que generan los demás módulos del ERP (compras, cuentas por pagar, ventas, almacén, distribución, entre otros) y convertirlas en asientos contables en partida doble, de forma automática, consistente y trazable.
 
-Para ello, el módulo se apoya en el Plan Contable General Empresarial (PCGE) y en los catálogos oficiales de la Superintendencia Nacional de Aduanas y de Administración Tributaria (SUNAT), de modo que cada operación quede registrada con las cuentas, el tipo de comprobante, la moneda y la glosa correspondientes. Asimismo, sirve de base para la consulta del libro diario, el libro mayor y el balance de comprobación, y para la generación de los libros electrónicos exigidos por SUNAT (PLE).
+Para ello, el módulo se apoya en el Plan Contable General Empresarial (PCGE) y en los catálogos oficiales de la Superintendencia Nacional de Aduanas y de Administración Tributaria (SUNAT), de modo que cada operación quede registrada con las cuentas, el tipo de comprobante, la moneda y la glosa correspondientes. Asimismo, sirve de base para la consulta del libro diario, el libro mayor y el balance de comprobación, y para la generación de los libros electrónicos exigidos por SUNAT (PLE), estados financieros y el flujo de caja.
 
 ---
 
@@ -31,7 +31,7 @@ Para ello, el módulo se apoya en el Plan Contable General Empresarial (PCGE) y 
 
 ## Alcance y Primera Implementación
 
-El equipo está a cargo del **MÓDULO II: OPERACIONES CONTABLES Y MOTOR DE AUTOMATIZACIÓN (CORE)** según las especificaciones del sistema financiero y contable global. Sus componentes funcionales son:
+El equipo está a cargo del **MÓDULO II: OPERACIONES CONTABLES Y MOTOR DE AUTOMATIZACIÓN (CORE)** y la capa analítica de saldos, gobernanza de cuentas y proyección financiera:
 
 ### 3.1. CRUD Maestro: Plantillas de Contabilización (Motor Contable)
 * **Reglas Parametrizables para Automatización (3.1.1):** Mecanismo dinámico que permite definir cuentas deudoras y acreedoras del PCGE, cálculo automático de bases imponibles y desglose de tributos (IGV 18%).
@@ -48,6 +48,12 @@ El equipo está a cargo del **MÓDULO II: OPERACIONES CONTABLES Y MOTOR DE AUTOM
 * **Automatización mediante Jobs Programados (3.3.1):** Tareas en segundo plano (Cron / Background Workers) para procesar asientos periódicos según fechas de corte preestablecidas.
 * **Catálogo de Operaciones Recurrentes (3.3.2):** Parametrización de transacciones fijas (alquileres devengados, depreciación mensual de activo fijo y amortización de intangibles).
 
+### 3.4. Gobernanza del Plan de Cuentas, Estados Financieros y Flujo de Caja
+* **Restricción de Cuentas por Módulo (RN-01):** Matriz de control que impide que un módulo externo utilice cuentas que no le corresponden (ej. Ventas solo puede usar cuentas 12, 40, 70).
+* **Mayorización y Cálculo de Saldos - "Sacar Cuentas" (RN-02):** Agregación de débitos y créditos del libro diario para calcular saldos deudores y acreedores en tiempo real y emitir el Balance de Comprobación cuadrado.
+* **Estados Financieros Oficiales (RN-03):** Generación automática del Balance General (Activo = Pasivo + Patrimonio) y el Estado de Resultados (P&G).
+* **Flujo de Caja y Soporte de Decisiones (RN-04):** Monitoreo de entradas y salidas de efectivo, seguimiento de atrasos y recomendaciones financieras ante déficit (préstamos) o excedente de liquidez.
+
 ---
 
 ## Organización y Estructura del Proyecto
@@ -60,7 +66,7 @@ fsi-motor-contable-transaccional/
 ├── backend/                      # API REST en Python (Django + DRF)
 ├── database/                     # Scripts DDL, migraciones y esquemas PostgreSQL
 ├── docs/                         # Documentación de arquitectura, backlog, flujos y DoD
-│   ├── backlog.md                # Backlog detallado de Historias de Usuario
+│   ├── backlog.md                # Backlog detallado de Historias de Usuario (HU-01 a HU-12)
 │   ├── ceremonias.md             # Definición de dailies, sprint planning y reviews
 │   ├── definition-of-done.md     # Criterios de aceptación y terminación de tareas
 │   ├── dependencias-entre-modulos.md # Contratos con módulos externos del ERP
@@ -93,9 +99,9 @@ Stack tecnológico oficial acordado por votación de la tribu:
 
 ## Historias de Usuario y Tareas
 
-El Product Backlog del Módulo II está estructurado en 8 Historias de Usuario principales con trazabilidad completa a los requerimientos:
+El Product Backlog del Módulo II está estructurado en 12 Historias de Usuario principales con trazabilidad completa a los requerimientos:
 
-| Código | Título de la Historia de Usuario | Requerimiento | Prioridad | Issue |
+| Código | Título de la Historia de Usuario | Requerimiento / Regla | Prioridad | Issue |
 | :---: | :--- | :---: | :---: | :---: |
 | **HU-01** | CRUD maestro de plantillas de contabilización para el motor contable | 3.1.2 | **Alta** | [#12](https://github.com/F4brici0L4yme/fsi-motor-contable-transaccional/issues/12) |
 | **HU-02** | Reglas parametrizables para automatización de eventos de negocio | 3.1.1 / 3.1.3 | **Alta** | [#13](https://github.com/F4brici0L4yme/fsi-motor-contable-transaccional/issues/13) |
@@ -105,6 +111,10 @@ El Product Backlog del Módulo II está estructurado en 8 Historias de Usuario p
 | **HU-06** | Consulta, filtros avanzados y trazabilidad del Libro Diario y Mayor C6 | 3.2.4 | **Media** | [#17](https://github.com/F4brici0L4yme/fsi-motor-contable-transaccional/issues/17) |
 | **HU-07** | Automatización de asientos periódicos mediante jobs programados | 3.3.1 | **Media** | [#18](https://github.com/F4brici0L4yme/fsi-motor-contable-transaccional/issues/18) |
 | **HU-08** | Configuración y catálogo de operaciones recurrentes (alquileres/depreciaciones) | 3.3.2 | **Media** | [#19](https://github.com/F4brici0L4yme/fsi-motor-contable-transaccional/issues/19) |
+| **HU-09** | Restricción y control de cuentas contables por módulo emisor | RN-01 (Segregación) | **Alta** | [#21](https://github.com/F4brici0L4yme/fsi-motor-contable-transaccional/issues/21) |
+| **HU-10** | Mayorización y cálculo automático de saldos (Sacar cuentas / Comprobación) | RN-02 (Mayorización) | **Alta** | [#22](https://github.com/F4brici0L4yme/fsi-motor-contable-transaccional/issues/22) |
+| **HU-11** | Consolidación y generación de Estados Financieros (Balance General y P&G) | RN-03 (EEFF) | **Alta** | [#23](https://github.com/F4brici0L4yme/fsi-motor-contable-transaccional/issues/23) |
+| **HU-12** | Seguimiento de Flujo de Caja y proyección de liquidez (Cobros/Pagos/Préstamos) | RN-04 (Flujo de Caja) | **Alta** | [#24](https://github.com/F4brici0L4yme/fsi-motor-contable-transaccional/issues/24) |
 
 > Para conocer los criterios de aceptación detallados y las notas técnicas de cada historia, consultar [docs/backlog.md](docs/backlog.md).
 
@@ -148,10 +158,11 @@ Los módulos emisores envían una petición HTTP POST con el siguiente esquema J
 * **`201 Created`**: Asiento procesado exitosamente. Retorna el ID asignado, número de asiento/CUO, estado (`APROBADO`), sumatoria Debe/Haber y hash de integridad.
 * **`200 OK` (Idempotencia)**: Si la tupla `(modulo_origen, referencia_origen_id)` ya fue procesada, responde con el asiento existente sin duplicar líneas contables.
 * **`400 Bad Request`**: Datos faltantes o tipos incompatibles en el payload.
-* **`422 Unprocessable Entity`**: Error de cuadre de partida doble o ausencia de regla contable aplicable para el evento.
+* **`403 Forbidden` / `422 Unprocessable Entity`**: Si el módulo emisor intenta utilizar cuentas contables no autorizadas en su matriz de permisos, o si el asiento no cuadra en partida doble.
 
 ### Matriz de Módulos Integrados:
-* **Compras & Cuentas por Pagar:** Registro de facturas de proveedores (Cuentas 60, 40, 42) y liquidación de pagos (Cuentas 42, 10).
-* **Ventas Virtuales & Comercio Electrónico:** Registro de facturación (Cuentas 12, 40, 70) y cobranzas pasarela/banco (Cuentas 10, 12).
+* **Compras & Cuentas por Pagar:** Facturas de proveedores (Cuentas 60, 40, 42) y liquidación de pagos (Cuentas 42, 10) que alimentan el flujo de caja.
+* **Ventas Virtuales & Comercio Electrónico:** Facturación (Cuentas 12, 40, 70) y cobranzas pasarela/banco (Cuentas 10, 12).
 * **Almacén & Distribución:** Asientos de variación de existencias y costos de ventas (Cuentas 69, 20).
 * **Control de Asistencia & Recursos Humanos:** Asientos de provisiones de planilla de sueldos y cargas sociales (Cuentas 62, 40, 41).
+* **Tesorería y Gerencia:** Consumo de saldos mayorizados para emisión de Balance General, P&G y proyección de liquidez para decisiones de financiamiento y préstamos bancarios.
